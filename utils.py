@@ -15,6 +15,8 @@ bace_model.eval()
 
 def predict_bace(smiles):
     mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return 0
     return bace_model(s2g(smiles), feats=node_featurizer(mol)["h"]).item()
 
 
@@ -43,10 +45,9 @@ def gpt_generate(n_samples):
     batch_size = n_samples
     x = torch.tensor([20], dtype=torch.long)[None,...].repeat(batch_size, 1).to(device)
     y = sample(model, x, block_size, temperature=1, sample=True, top_k=None, prop = None, scaffold = None)
-    print("\n".join([
-              "".join([vocab[char] for char in sampled]).replace("<", "")
-          for sampled in y]))
-    return y
+    smiles = ["".join([vocab[char] for char in sampled]).replace("<", "")
+              for sampled in y]
+    return smiles
 
 @torch.no_grad()
 def sample(model, x, steps, temperature=1.0, sample=False, top_k=None, prop = None, scaffold = None):
